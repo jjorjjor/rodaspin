@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <button id="logoutBtn" style="position: absolute; top: 20px; right: 20px;">Logout</button>
+<script>
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('isLoggedIn');
+    window.location.href = 'login.html';
+  });
+</script>
+
+    <script>
+  if (!sessionStorage.getItem('isLoggedIn')) {
+    window.location.href = 'login.html';
+  }
+</script>
+
+  <meta charset="UTF-8">
+  <title>Admin - Buat Kode Tiket Spin</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    input, select, button {
+      padding: 8px;
+      margin: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin - Buat Kode Tiket Spin</h1>
+
+  <label>Username:</label>
+  <input type="text" id="username" placeholder="Nama pengguna">
+  
+  <label>Hadiah:</label>
+  <select id="hadiah">
+    <option value="Rp 50K💰">Rp 50K💰</option>
+    <option value="Rp 100K💰">Rp 100K💰</option>
+    <option value="Rp 200K💰">Rp 200K💰</option>
+    <option value="Rp 500K💰">Rp 500K💰</option>
+    <option value="TV📺">TV📺</option>
+    <option value="iPhone 15🎉">iPhone 15🎉</option>
+    <option value="Sepeda🚲">Sepeda🚲</option>
+    <option value="Zonk 😅">Zonk 😅</option>
+  </select>
+
+  <button onclick="buatTiket()">Generate Tiket</button>
+
+  <h2>Daftar Tiket</h2>
+  <table id="tabelTiket">
+    <thead>
+      <tr>
+        <th>Kode Tiket</th>
+        <th>Username</th>
+        <th>Hadiah</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    // Proteksi agar tidak bisa diakses tanpa login
+    if (!sessionStorage.getItem('isLoggedIn')) {
+      window.location.href = 'login.html';
+    }
+
+    let tiketList = [];
+
+function tampilkanTabel() {
+  const tbody = document.querySelector("#tabelTiket tbody");
+  tbody.innerHTML = "";
+
+  // Menampilkan data terbaru di atas
+  [...tiketList].reverse().forEach(t => {
+    const row = `<tr>
+      <td>${t.kode}</td>
+      <td>${t.username}</td>
+      <td>${t.hadiah}</td>
+      <td>${t.status}</td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+
+
+
+function buatTiket() {
+  const username = document.getElementById('username').value.trim();
+  const hadiah = document.getElementById('hadiah').value;
+  if (!username) return alert("Masukkan username");
+
+  const kode = 'TIKET' + Math.floor(1000 + Math.random() * 9000);
+  const data = { kode, username, hadiah, status: "belum" };
+
+  fetch("simpan_tiket.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.status === "success") {
+      tiketList.push(data);
+      tampilkanTabel();
+    } else {
+      alert("Gagal menyimpan tiket!");
+    }
+  });
+}
+
+
+    fetch("data.json")
+      .then(res => res.json())
+      .then(data => {
+        tiketList = data;
+        tampilkanTabel();
+      });
+  </script>
+</body>
+</html>
