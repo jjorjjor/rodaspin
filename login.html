@@ -3,16 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <title>Login Admin</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Login Admin</h2>
-  <input type="password" id="pass" placeholder="Masukkan password">
+  <h2>🔒 Login Admin Panel</h2>
+  <input type="password" id="pass" placeholder="Masukkan password admin">
   <button onclick="login()">Login</button>
 
   <script>
     function login() {
       const pass = document.getElementById("pass").value;
-      if (pass === "admin123") {
+      if (pass === "admin123") { // Ganti password di sini
         sessionStorage.setItem("isLoggedIn", true);
         window.location.href = "admin.html";
       } else {
