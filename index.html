@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <title>Lucky Spin Klaim Tiket</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <style>
     #btnMusik {
       position: absolute;
       top: 20px;
       left: 20px;
       z-index: 999;
-      font-size: 18px;     
-      padding: 12px 20px;    
-      transform: scale(1.5);  
+      font-size: 18px;
+      padding: 12px 20px;
+      transform: scale(1.5);
     }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -26,14 +27,12 @@
       background: url("spin4.jpg") no-repeat center center fixed;
       background-size: cover;
     }
-
     .wheel-container {
       position: relative;
       width: 320px;
       height: 320px;
       margin: 0 auto;
     }
-
     .pointer {
       width: 0;
       height: 0;
@@ -46,7 +45,6 @@
       transform: translateX(-50%);
       z-index: 10;
     }
-
     .wheel {
       width: 100%;
       height: 100%;
@@ -57,7 +55,6 @@
       transform: rotate(0deg);
       transition: transform 5s ease-out;
     }
-
     .slice {
       position: absolute;
       width: 50%;
@@ -66,7 +63,6 @@
       left: 50%;
       transform-origin: 0% 0%;
     }
-
     .label {
       position: absolute;
       top: 60%;
@@ -79,12 +75,10 @@
       pointer-events: none;
       text-align: center;
     }
-
     input {
       padding: 8px;
       margin: 5px;
     }
-
     button {
       padding: 10px 20px;
       font-size: 16px;
@@ -95,7 +89,6 @@
 </head>
 <body>
   <h1>🎉 Lucky Spin 🎉</h1>
-
   <input type="text" id="username" placeholder="Masukkan Username" style="margin-bottom: -20px;"><br>
   <input type="text" id="kodeTiket" placeholder="Masukkan Kode Tiket"><br>
 
@@ -105,11 +98,22 @@
   </div>
 
   <button onclick="putar()">PUTAR!</button>
-
   <audio id="bgm" src="stecu.mp3" type="audio/mpeg" loop></audio>
   <button onclick="toggleMusic()" id="btnMusik">🔊 Mainkan Musik</button>
 
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAoZwabD8LE9wLpUL0rKFzv1PgUxb0B1mY",
+      authDomain: "luckyspinnewdb.firebaseapp.com",
+      databaseURL: "https://luckyspinnewdb-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "luckyspinnewdb",
+      storageBucket: "luckyspinnewdb.firebasestorage.app",
+      messagingSenderId: "710152901616",
+      appId: "1:710152901616:web:0cda01d2085e59c1c0c335"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     const items = ["iPhone 15🎉", "Rp 50K💰", "Rp 100K💰", "Rp 200K💰", "TV📺", "Rp 500K💰", "Sepeda🚲", "Zonk 😅"];
     const wheel = document.getElementById("wheel");
 
@@ -139,25 +143,32 @@
       const kode = document.getElementById("kodeTiket").value.trim();
       if (!username || !kode) return alert("Masukkan Username dan Kode Tiket!");
 
-      let tiketList = JSON.parse(localStorage.getItem("tiketList") || "[]");
-      const indexTiket = tiketList.findIndex(t => t.username === username && t.kode === kode);
+      db.ref("tiketList").once("value", snapshot => {
+        const data = snapshot.val() || [];
+        const tiketList = Object.values(data);
+        const indexTiket = tiketList.findIndex(t => t.username === username && t.kode === kode);
 
-      if (indexTiket === -1) return alert("Tiket tidak ditemukan!");
-      if (tiketList[indexTiket].status !== "belum") return alert("Tiket sudah digunakan!");
+        if (indexTiket === -1) return alert("Tiket tidak ditemukan!");
+        if (tiketList[indexTiket].status !== "belum") return alert("Tiket sudah digunakan!");
 
-      const hadiah = tiketList[indexTiket].hadiah;
-      const index = items.indexOf(hadiah);
-      if (index === -1) return alert("Hadiah tidak valid!");
+        const hadiah = tiketList[indexTiket].hadiah;
+        const index = items.indexOf(hadiah);
+        if (index === -1) return alert("Hadiah tidak valid!");
 
-      const sliceAngle = 360 / items.length;
-      const targetDeg = 360 * 5 + (360 - (index * sliceAngle + sliceAngle / 2)) + 50;
-      wheel.style.transform = `rotate(${targetDeg}deg)`;
+        const sliceAngle = 360 / items.length;
+        const targetDeg = 360 * 5 + (360 - (index * sliceAngle + sliceAngle / 2)) + 50;
+        wheel.style.transform = `rotate(${targetDeg}deg)`;
 
-      setTimeout(() => {
-        alert(`🌟 Selamat! Anda mendapatkan: ${hadiah}`);
-        tiketList[indexTiket].status = "selesai";
-        localStorage.setItem("tiketList", JSON.stringify(tiketList));
-      }, 5200);
+        setTimeout(() => {
+          alert(`🌟 Selamat! Anda mendapatkan: ${hadiah}`);
+          const ref = db.ref("tiketList").orderByChild("kode").equalTo(kode);
+          ref.once("value", snap => {
+            snap.forEach(child => {
+              child.ref.update({ status: "selesai" });
+            });
+          });
+        }, 5200);
+      });
     }
 
     let isPlaying = false;
@@ -171,7 +182,6 @@
           btn.innerText = "⏸️ Stop Musik";
         }).catch(err => {
           alert("Autoplay diblokir, silakan klik ulang");
-          console.warn(err);
         });
       } else {
         bgm.pause();
